@@ -28,6 +28,7 @@ async function startServer() {
   let gameActive = false;
   let currentDrawer: string | null = null;
   let currentWord = "";
+  let currentHint: string[] = [];
   let timer: NodeJS.Timeout | null = null;
   let timeLeft = 0;
   let round = 0;
@@ -63,6 +64,7 @@ async function startServer() {
     const randomCategory = categoryNames[Math.floor(Math.random() * categoryNames.length)];
     const categoryWords = words[randomCategory];
     currentWord = categoryWords[Math.floor(Math.random() * categoryWords.length)];
+    currentHint = currentWord.split("").map(char => char === " " ? " " : "_");
 
     timeLeft = roundTime;
     io.emit("new-round", {
@@ -72,6 +74,7 @@ async function startServer() {
       maxRounds,
       timeLeft,
       category: randomCategory,
+      hint: currentHint.join(" ")
     });
 
     io.to(currentDrawer!).emit("your-word", currentWord);
@@ -80,6 +83,17 @@ async function startServer() {
     timer = setInterval(() => {
       timeLeft--;
       io.emit("timer-update", timeLeft);
+      
+      // Hint logic: Reveal a letter every 20 seconds
+      if (timeLeft > 0 && timeLeft % 20 === 0 && timeLeft !== roundTime) {
+        const unrevealedIndices = currentHint.map((char, index) => char === "_" ? index : -1).filter(index => index !== -1);
+        if (unrevealedIndices.length > 1) { // Keep at least one letter hidden
+          const randomIndex = unrevealedIndices[Math.floor(Math.random() * unrevealedIndices.length)];
+          currentHint[randomIndex] = currentWord[randomIndex];
+          io.emit("hint-update", currentHint.join(" "));
+        }
+      }
+
       if (timeLeft <= 0) endTurn("Time's up!");
     }, 1000);
   };

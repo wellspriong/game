@@ -44,6 +44,7 @@ interface GameState {
   timeLeft: number;
   word: string | null;
   category: string | null;
+  hint: string | null;
 }
 
 const COLORS = [
@@ -150,7 +151,8 @@ export default function App() {
     maxRounds: 3,
     timeLeft: 0,
     word: null,
-    category: null
+    category: null,
+    hint: null
   });
   const [gameSettings, setGameSettings] = useState({ rounds: 3, time: 60 });
   const [showSettings, setShowSettings] = useState(false);
@@ -222,9 +224,14 @@ export default function App() {
         maxRounds: data.maxRounds,
         timeLeft: data.timeLeft,
         category: data.category,
+        hint: data.hint,
         word: null // Reset word for non-drawers
       }));
       clearCanvasLocal();
+    });
+
+    socketRef.current.on('hint-update', (hint: string) => {
+      setGameState(prev => ({ ...prev, hint }));
     });
 
     socketRef.current.on('your-word', (word: string) => {
@@ -601,9 +608,9 @@ export default function App() {
               </div>
             </div>
             <div className="flex flex-col items-center min-w-[120px]">
-              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Word</span>
+              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{isDrawer ? 'Word' : 'Hint'}</span>
               <span className="text-lg font-bold text-black tracking-[0.2em]">
-                {isDrawer ? gameState.word : gameState.word ? gameState.word : '_ '.repeat(gameState.word?.length || 5)}
+                {isDrawer ? gameState.word : gameState.hint || '_ '.repeat(gameState.word?.length || 5)}
               </span>
               <span className="text-[10px] text-gray-400 font-medium">({gameState.category})</span>
             </div>
