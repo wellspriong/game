@@ -1,0 +1,5 @@
+{
+  "name": "Skribbl Local",
+  "description": "A real-time drawing and guessing game for local networks with custom settings and word lists.",
+  "requestFramePermissions": []
+}
